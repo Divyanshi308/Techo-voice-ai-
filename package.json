@@ -1,0 +1,25 @@
+{
+  "name": "vyaparvaani",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VyaparVaani - multilingual, voice-first business assistant for small-business owners in India",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "reset-data": "node server/scripts/reset-data.js",
+    "preflight": "node server/scripts/preflight.js",
+    "agora:tokens": "node server/scripts/agora-tokens.js",
+    "test:agora": "node server/scripts/integration-test.js",
+    "build:validate": "node server/scripts/validate-build.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "agora-access-token": "^2.0.4",
+    "agora-token": "^2.0.6",
+    "compression": "^1.8.1",
+    "express": "^4.19.2"
+  }
+}

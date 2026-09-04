@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Techo - multilingual, voice-first business assistant for small-business owners in India" />
+  <meta name="theme-color" content="#070C16" />
+  <title>Techo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗣️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Gujarati:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&family=Noto+Sans+Gurmukhi:wght@400;500;600;700&family=Noto+Sans+Odia:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="stylesheet" href="/css/pixel.css" />
+  <!-- Home-page night-street GIF (used ONLY on the home page via CSS).
+       Drop the provided GIF at /public/backgrounds/techo-home-bg.gif.
+       It is preloaded from home.js only when home renders, so inner pages
+       never download it. -->
+</head>
+<body>
+  <!-- Dynamic theme background injected by JS -->
+  <div id="bg-layer" aria-hidden="true"></div>
+
+  <!-- Pixel Business World scene (replaces the 3D orbs) -->
+  <div id="pixel-world" aria-hidden="true"></div>
+
+  <!-- Toast container -->
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- Root mount -->
+  <div id="app"></div>
+
+  <!-- Consent / permission modal used across the app -->
+  <div id="modal-root"></div>
+
+  <noscript>
+    <div style="padding:2rem;font-family:sans-serif;text-align:center">
+      Techo needs JavaScript. Please enable it to continue.
+    </div>
+  </noscript>
+
+  <!-- Official Agora RTC Web SDK is lazy-loaded on demand (see agora-client.js).
+       Removed from the eager script list to save ~1MB on every page load.
+       The app falls back to browser Web Speech if offline/unavailable. -->
+
+  <script src="/js/lib/api.js" defer></script>
+  <script src="/js/lib/i18n.js" defer></script>
+  <script src="/js/lib/router.js" defer></script>
+  <script src="/js/lib/language-registry.js" defer></script>
+  <script src="/js/lib/voice.js" defer></script>
+  <script src="/js/lib/realtime.js" defer></script>
+  <script src="/js/lib/agora-client.js" defer></script>
+  <script src="/js/lib/ui.js" defer></script>
+  <script src="/js/lib/3d.js" defer></script>
+  <script src="/js/lib/pixel-world.js" defer></script>
+  <script src="/js/lib/pixel-avatars.js" defer></script>
+  <script src="/js/lib/avatar-client.js" defer></script>
+  <script src="/js/app.js" defer></script>
+  <script src="/js/views/login.js" defer></script>
+  <script src="/js/views/home.js" defer></script>
+  <script src="/js/views/chat.js" defer></script>
+  <script src="/js/views/profile.js" defer></script>
+  <script src="/js/views/avatar-voice.js" defer></script>
+  <script src="/js/views/avatar-mode.js" defer></script>
+  <script src="/js/views/reminders.js" defer></script>
+  <script src="/js/views/surveys.js" defer></script>
+  <script src="/js/views/support.js" defer></script>
+  <script src="/js/views/privacy.js" defer></script>
+  <script src="/js/views/settings.js" defer></script>
+  <script src="/js/views/admin.js" defer></script>
+  <script src="/js/views/sales.js" defer></script>
+  <script src="/js/views/marketing.js" defer></script>
+  <script src="/js/views/history.js" defer></script>
+  <script src="/js/views/reviews.js" defer></script>
+  <script src="/js/views/language.js" defer></script>
+  <script src="/js/views/agora.js" defer></script>
+  <script src="/js/views/integrations.js" defer></script>
+  <script src="/js/views/avatar-studio.js" defer></script>
+  <script src="/js/views/agent-config.js" defer></script>
+</body>
+</html>

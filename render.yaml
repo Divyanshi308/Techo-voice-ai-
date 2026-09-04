@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: vyaparvaani
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VY_COOKIE_SECURE
+        value: "1"
+      # PUBLIC_BASE_URL, VY_COOKIE_SECRET, AGORA_*, WEBHOOK_SECRET,
+      # GOOGLE_*, RESEND_*, HEYGEN_* must be set from the Render dashboard,
+      # mirroring the local .env (they are NOT committed).

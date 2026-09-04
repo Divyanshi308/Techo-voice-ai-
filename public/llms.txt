@@ -1,0 +1,25 @@
+# Techo
+
+Techo is a multilingual, voice-first business assistant for Indian small-business owners, e-commerce sellers, and aspiring entrepreneurs. Users talk to the assistant in Hinglish, Hindi, English, and 16 other Indian languages to manage sales, expenses, reminders, surveys, reviews, marketing, and customer outreach.
+
+## Key Features
+
+- Real-time voice interaction (Agora Conversational AI live sessions + Web Speech fallback)
+- 18 supported Indian languages with language auto-detection and code-switching
+- Business dashboard: sales & expenses, marketing studio, reminders & calls, surveys, reviews
+- Integrations ("Give Your MCP a Voice"): Google Calendar scheduling, Resend email, Stripe read-only payments demo
+- Human expert escalation for complex support cases
+- Conversation history and privacy controls
+
+## Main Pages
+
+- [Home](/home) — search and voice entry
+- [Talk to Techo](/chat) — voice assistant chat
+- [Sales and Expenses](/sales) — financial overview
+- [Marketing Studio](/marketing) — marketing tools
+- [Reminders and Calls](/reminders) — scheduled tasks
+- [Surveys](/surveys) — customer surveys
+- [Reviews](/reviews) — customer feedback
+- [Language Timeline](/language) — language settings
+- [Agora Integration](/agora) — voice AI configuration
+- [Integrations](/integrations) — Calendar, Email, Payments ("Give Your MCP a Voice")

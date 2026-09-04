@@ -1,0 +1,15 @@
+# Secrets — never commit (covers .env + backups like .env.bak /.env.local)
+.env
+.env.*
+!.env.example
+
+# Runtime data (seeded local JSON store + user files)
+server/data/
+server/storage/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
