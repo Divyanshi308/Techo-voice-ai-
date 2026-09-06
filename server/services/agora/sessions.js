@@ -127,8 +127,6 @@ function addTurn(userId, { role, text, lang, langConfidence, intent, entities, a
     audioRef: audioRef || null,
     at: new Date().toISOString()
   });
-  if (!s.watchedUserIdx || s.watchedUserIdx < 0) s.watchedUserIdx = 0;
-  s.watchedUserIdx = s.transcript.length - 1;
   return s;
 }
 
