@@ -17,8 +17,11 @@ const registry = require('../providerRegistry');
 const ENVIRONMENTS = ['dev', 'staging', 'prod'];
 
 function env() {
-  const e = String(process.env.AGORA_ENV || 'dev').toLowerCase();
-  return ENVIRONMENTS.includes(e) ? e : 'dev';
+  const raw = String(process.env.AGORA_ENV || '').toLowerCase();
+  if (ENVIRONMENTS.includes(raw)) return raw;
+  // No explicit AGORA_ENV: a production deployment is 'prod' by default so
+  // productionReady is reported honestly (never a stale dev label).
+  return String(process.env.NODE_ENV) === 'production' ? 'prod' : 'dev';
 }
 
 /** True only when both customer id + secret are present (real credentials). */

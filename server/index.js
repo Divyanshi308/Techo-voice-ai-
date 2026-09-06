@@ -6,7 +6,7 @@ const path = require('path');
 const compression = require('compression');
 const express = require('express');
 const store = require('./db');
-const { seed } = require('./seed');
+const { seed, refreshDemoData } = require('./seed');
 const reminders = require('./services/reminders');
 
 const PORT = process.env.PORT || 4321;
@@ -20,6 +20,7 @@ store.init([
   'agentConfig', 'agentVersions', 'integrationTokens', 'emails'
 ]);
 seed();
+try { refreshDemoData(); } catch (e) { console.error('[seed] refreshDemoData failed:', e.message); }
 
 const app = express();
 app.disable('x-powered-by');

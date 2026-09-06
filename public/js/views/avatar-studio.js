@@ -27,9 +27,15 @@ views.avatarStudio = {
       return el;
     }
 
+    const avail = st.availability || {};
     el.appendChild(h('div', { class: 'card mt' }, [
-      h('div', { class: 'between' }, [h('h3', {}, 'Talking-head avatar'), h('span', { class: 'tag good' }, 'Configured')]),
-      h('p', { class: 'small muted mt6' }, 'Select an avatar. During a voice conversation, Techo renders the chosen avatar speaking each reply.')
+      h('div', { class: 'between' }, [
+        h('h3', {}, 'Talking-head avatar'),
+        h('span', { class: avail.videoGeneration === false ? 'tag warn' : 'tag good' }, avail.videoGeneration === false ? 'Video paused (no credits)' : 'Configured')
+      ]),
+      h('p', { class: 'small muted mt6' }, avail.videoGeneration === false
+        ? 'The HeyGen account has no video-generation credits left, so talking videos are paused on this deployment. Avatar selection and voice conversations keep working — only video rendering needs credits.'
+        : 'Select an avatar. During a voice conversation, Techo renders the chosen avatar speaking each reply.')
     ]));
 
     const grid = h('div', { class: 'grid3 mt' });

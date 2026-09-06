@@ -124,8 +124,11 @@ const AgoraClient = {
     if (!session || !session.rtc || !session.rtc.appId) {
       return { ok: false, mode: 'mock', note: 'No live Agora agent session — staying in mock/browser mode.' };
     }
+    try { await AgoraClient.loadSDK(); } catch (e) {
+      return { ok: false, mode: 'unavailable', note: e.message };
+    }
     if (!(window.AgoraRTC && window.AgoraRTC.createClient)) {
-      return { ok: false, mode: 'unavailable', note: 'AgoraRTC SDK not loaded (script tag missing).' };
+      return { ok: false, mode: 'unavailable', note: 'AgoraRTC SDK failed to initialise.' };
     }
     try {
       const RTC = window.AgoraRTC;

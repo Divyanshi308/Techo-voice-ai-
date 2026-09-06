@@ -29,6 +29,7 @@ router.get('/api/config', (req, res) => {
     prompts: store.all('prompts'),
     disclaimer: settings.disclaimer || '',
     mockNotes: settings.mockNotes || {},
+    demoMode: settings.mockMode === true,
     aiProvider: aiProvider.PROVIDER,
     telephonyMock: true,
     providers: realtime.pipelineStatus()
@@ -47,7 +48,14 @@ router.get('/api/health', (req, res) => {
   res.json({
     ok: true,
     uptime: process.uptime(),
+    demo: true,
     provider: aiProvider.PROVIDER.kind,
+    labels: {
+      ai: 'mock (local rule-based engine — no external LLM key)',
+      telephony: process.env.TELNYX_API_KEY ? 'telnyx (real)' : 'simulated (mock telephony)',
+      asr: process.env.DEEPGRAM_API_KEY ? 'deepgram' : 'browser Web Speech',
+      tts: process.env.ELEVENLABS_API_KEY ? 'elevenlabs' : 'device/browser synthesis'
+    },
     agora: { connection: agora.connection, env: agora.env, mocked: agora.mocked }
   });
 });

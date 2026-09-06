@@ -19,6 +19,25 @@ const PROVIDERS = {
   none: 'none'
 };
 
+// Credit state: recorded when a provider call reports insufficient_credit so
+// the UI can show an honest "video generation paused" state instead of a
+// broken create-video flow. Voice conversations keep working regardless.
+let creditsBlockedAt = 0;
+
+function markCreditsExhausted() {
+  if (!creditsBlockedAt) creditsBlockedAt = Date.now();
+}
+
+function availability() {
+  return creditsBlockedAt
+    ? {
+        videoGeneration: false,
+        blocked: true,
+        note: 'HeyGen video-generation credits are exhausted on this account — talking-video generation is paused. Voice conversations and avatar selection keep working fine.'
+      }
+    : { videoGeneration: true, blocked: false, note: '' };
+}
+
 function configuredProvider() {
   const p = String(process.env.AVATAR_PROVIDER || 'heygen').toLowerCase().trim();
   if (p === 'none' || p === '' || p === 'mock') return PROVIDERS.none;
@@ -47,7 +66,8 @@ function status() {
   return {
     provider: p === PROVIDERS.none ? 'none' : 'heygen',
     configured: on,
-    setup: on ? [] : setupSteps()
+    setup: on ? [] : setupSteps(),
+    availability: availability()
   };
 }
 
@@ -61,4 +81,7 @@ function getProvider() {
   return require('./heygen');
 }
 
-module.exports = { configured, configureProviderCheck: configuredProvider, status, getProvider, catalog, PROVIDERS };
+module.exports = {
+  configured, configureProviderCheck: configuredProvider, status, getProvider,
+  catalog, PROVIDERS, availability, markCreditsExhausted
+};

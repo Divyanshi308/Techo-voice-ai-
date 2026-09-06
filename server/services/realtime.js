@@ -66,15 +66,20 @@ const issueToken = (channelName, uid = 0) => {
   return { available: true, token, channel, uid: uidInt, appId: realtimeCfg.agoraAppId, fallback: 'agora' };
 };
 
-const pipelineStatus = () => ({
-  realtime: registry.get('realtime'),
-  asr: registry.get('asr'),
-  tts: registry.get('tts'),
-  llm: registry.get('llm'),
-  telephony: registry.get('telephony'),
-  avatar: registry.get('avatar'),
-  humanAgent: registry.get('humanAgent'),
-  fullRegistry: registry.registry()
-});
+const pipelineStatus = () => {
+  // Sanitized: only { provider, configured, note } leave the server (the raw
+  // PROFILE.realtime object contains the App Certificate — never serialize it).
+  const r = registry.registry();
+  return {
+    realtime: r.realtime,
+    asr: r.asr,
+    tts: r.tts,
+    llm: r.llm,
+    telephony: r.telephony,
+    avatar: r.avatar,
+    humanAgent: r.humanAgent,
+    fullRegistry: r
+  };
+};
 
 module.exports = { issueToken, pipelineStatus };

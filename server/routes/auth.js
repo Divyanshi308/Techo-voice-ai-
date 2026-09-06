@@ -3,12 +3,13 @@
 const express = require('express');
 const store = require('../db');
 const auth = require('../auth');
+const { publicBaseUrl } = require('../baseUrl');
 
 const router = express.Router();
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
-const BASE_URL = process.env.PUBLIC_BASE_URL || process.env.VY_BASE_URL || 'http://localhost:4321';
+const BASE_URL = publicBaseUrl();
 const REDIRECT_URI = `${BASE_URL}/auth/google/callback`;
 
 const googleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);

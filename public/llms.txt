@@ -1,6 +1,19 @@
 # Techo
 
+Homepage / app: https://techo-voice-ai.onrender.com
+
 Techo is a multilingual, voice-first business assistant for Indian small-business owners, e-commerce sellers, and aspiring entrepreneurs. Users talk to the assistant in Hinglish, Hindi, English, and 16 other Indian languages to manage sales, expenses, reminders, surveys, reviews, marketing, and customer outreach.
+
+## What is real vs simulated (on the live deployment)
+
+- Agora Conversational AI voice sessions: real
+- Google Calendar OAuth: real (configured)
+- Email via Resend: real
+- Outbound phone calls: simulated (mock telephony — no real dialing)
+- Speech-to-text / text-to-speech: browser Web Speech + device voices
+- AI reply engine: local rule-based mock engine (no external LLM key)
+- Payments: demo figures from the local ledger (no Stripe key)
+- Talking-head videos: HeyGen configured; generation requires account credits
 
 ## Key Features
 

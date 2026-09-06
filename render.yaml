@@ -13,3 +13,5 @@ services:
       # PUBLIC_BASE_URL, VY_COOKIE_SECRET, AGORA_*, WEBHOOK_SECRET,
       # GOOGLE_*, RESEND_*, HEYGEN_* must be set from the Render dashboard,
       # mirroring the local .env (they are NOT committed).
+      # AGORA_ENV may be left unset: with NODE_ENV=production it resolves to
+      # 'prod' automatically (server/services/agora/config.js).

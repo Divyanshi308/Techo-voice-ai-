@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { publicBaseUrl } = require('./baseUrl');
 
 const SECRET = process.env.VY_COOKIE_SECRET || 'dev-secret-change-me';
 if (!process.env.VY_COOKIE_SECRET) {
@@ -12,7 +13,7 @@ const TTL_MS = 30 * 24 * 3600 * 1000; // 30 days
 // Secure-only cookie when running behind HTTPS (production). Set
 // VY_COOKIE_SECURE=1 (or force via NODE_ENV=production + https) to enable.
 const COOKIE_SECURE = String(process.env.VY_COOKIE_SECURE) === '1' ||
-  (String(process.env.NODE_ENV) === 'production' && String(process.env.PUBLIC_BASE_URL).startsWith('https'));
+  (String(process.env.NODE_ENV) === 'production' && publicBaseUrl().startsWith('https'));
 
 const sign = (payload) => {
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');

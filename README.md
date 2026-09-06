@@ -8,6 +8,28 @@ questions to human experts — all with explicit, per-feature privacy consent.
 **Core voice engine:** [Agora Conversational AI](https://docs.agora.io/en/conversational-ai/overview/product-overview)
 (real agent sessions + RTC audio when configured, honest browser fallback otherwise).
 
+## Live demo
+
+**https://techo-voice-ai.onrender.com** — deployed public demo. Sign in with
+the **Demo owner (Vijay Sharma)** button (`demo@vyaparvaani.local`, a local test
+identifier) or **Admin**.
+
+What is real on the live site vs simulated (all labelled in-app too):
+
+| Capability | On the live demo |
+|---|---|
+| Agora voice AI sessions | Real (production agent, real RTC) |
+| Google Calendar OAuth | Configured — connect your Google account |
+| Email (Resend) | Real email delivery |
+| Payments read-only | Demo figures from the local ledger (no Stripe key) |
+| Outbound phone calls | **Simulated** (mock telephony — no real dialing) |
+| Speech-to-text / TTS | Browser Web Speech + device voices (no Deepgram/ElevenLabs keys) |
+| AI reply engine | Local rule-based mock engine (no external LLM key) |
+| Talking-head videos | HeyGen configured; generation needs account credits |
+
+Deployment details, env vars and the manual release checklist are in
+[`DEPLOYMENT.md`](DEPLOYMENT.md).
+
 ## Quick start
 
 ```bash

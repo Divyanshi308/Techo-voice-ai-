@@ -59,6 +59,7 @@ const placeOutboundCall = async ({ userId, contactId, kind, surveyId, consent, s
     userId, contactId, kind, surveyId, consent,
     status: 'scheduled',
     channel: MOCK_PROVIDER ? 'mock-voice' : 'real-voice',
+    simulated: MOCK_PROVIDER,
     scheduled: scheduledAt || new Date().toISOString(),
     at: null, durationSec: null, transcript: transcript || ''
   });

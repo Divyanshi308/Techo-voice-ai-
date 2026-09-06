@@ -32,7 +32,7 @@ const PROFILE = {
     customerId: !!process.env.AGORA_CUSTOMER_ID,
     customerSecret: !!process.env.AGORA_CUSTOMER_SECRET,
     agentId: process.env.AGORA_AGENT_ID || '',
-    env: process.env.AGORA_ENV || 'dev',
+    env: String(process.env.AGORA_ENV || (process.env.NODE_ENV === 'production' ? 'prod' : 'dev')).toLowerCase(),
     provider: (process.env.AGORA_CUSTOMER_ID && process.env.AGORA_CUSTOMER_SECRET) ? 'agora-conversational-ai' : 'mock',
     note: (process.env.AGORA_CUSTOMER_ID && process.env.AGORA_CUSTOMER_SECRET)
       ? 'Agora Conversational AI configured (customer credentials present).'

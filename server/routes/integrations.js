@@ -15,6 +15,7 @@ const calendar = require('../services/integrations/calendar');
 const email = require('../services/integrations/email');
 const stripe = require('../services/integrations/stripe');
 const agoraConfig = require('../services/agora/config');
+const { publicBaseUrl } = require('../baseUrl');
 
 const router = express.Router();
 
@@ -44,13 +45,14 @@ router.get('/api/calendar/status', auth.requireUser, (req, res) => {
 });
 
 router.get('/api/calendar/auth-url', auth.requireUser, (req, res) => {
-  res.json({ ok: true, ...calendar.authUrl(req.session.uid) });
+  const r = calendar.authUrl(req.session.uid);
+  res.json({ ok: true, ...r, redirectUri: calendar.status().redirectUri });
 });
 
 // OAuth callback — user approved access on Google's site (explicit consent).
 router.get('/api/calendar/callback', auth.requireUser, async (req, res) => {
   const { code, error } = req.query || {};
-  const base = process.env.PUBLIC_BASE_URL || 'http://localhost:4321';
+  const base = publicBaseUrl();
   if (error || !code) {
     return res.redirect(base + '/#/reminders?cal=error');
   }

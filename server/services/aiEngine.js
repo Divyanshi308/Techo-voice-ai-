@@ -199,11 +199,13 @@ const T = {
 const FALLBACK_T = 'hing';
 
 const lpick = (lang, key) => {
-  return (T[lang] && T[lang][key]) || T[FALLBACK_T][key] || T.en[key] || '';
+  let v = (T[lang] && T[lang][key]) || T[FALLBACK_T][key] || T.en[key] || '';
+  if (Array.isArray(v)) v = v[Math.floor(Math.random() * v.length)] || '';
+  return String(v);
 };
 const lfill = (lang, key, vars = {}) => {
   let s = lpick(lang, key);
-  for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(v);
+  for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(v == null ? '' : String(v));
   return s;
 };
 

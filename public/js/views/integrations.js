@@ -88,6 +88,9 @@ async function calendarCard(c) {
     card.appendChild(h('button', { class: 'btn sm ghost mt6', onclick: async () => { await API.post('/api/calendar/disconnect'); UI.toast('Calendar disconnected.'); views.integrations.render().then(() => {}); } }, 'Disconnect'));
   } else {
     card.appendChild(h('p', { class: 'small muted' }, 'Server is configured — connect your Google account to finish setup.'));
+    if (c.redirectUri) {
+      card.appendChild(h('p', { class: 'small muted mt6' }, 'Make sure this redirect URI is added to your Google OAuth client: ' + c.redirectUri));
+    }
     card.appendChild(h('button', { class: 'btn sm mt6', onclick: async () => {
       try { const r = await API.get('/api/calendar/auth-url'); if (r.url) window.location.href = r.url; }
       catch (e) { UI.toast('Could not start Google connect.', 'bad'); }

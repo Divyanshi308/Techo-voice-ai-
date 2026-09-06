@@ -50,7 +50,7 @@ router.get('/api/avatar/list', auth.requireUser, async (req, res) => {
     } catch (e) { /* keep catalog */ }
   }
   avatars = avatars.map((a) => ({ ...a, thumbnail: a.thumbnail || thumbnails[a.id] || null }));
-  res.json({ ok: true, provider: st.provider, configured: st.configured, setup: st.setup, avatars, selected });
+  res.json({ ok: true, provider: st.provider, configured: st.configured, setup: st.setup, availability: provider.availability(), avatars, selected });
 });
 
 router.put('/api/avatar/select', auth.requireUser, (req, res) => {
@@ -78,7 +78,7 @@ router.post('/api/avatar/create-talk', auth.requireUser, async (req, res) => {
   const r = await provider.getProvider().createTalk({ text, avatarId, voiceId: b.voiceId || undefined });
   if (!r.ok) {
     const code = r.code === 'insufficient_credit' ? 402 : 502;
-    return res.status(code).json({ ok: false, reason: r.reason, code: r.code || null, message: r.message });
+    return res.status(code).json({ ok: false, reason: r.reason, code: r.code || null, message: r.message, availability: provider.availability() });
   }
   res.json({ ok: true, videoId: r.videoId, status: r.status });
 });

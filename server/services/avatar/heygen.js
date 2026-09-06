@@ -79,6 +79,10 @@ async function createTalk({ text, avatarId, voiceId }) {
     });
   } catch (e) {
     const reason = e.code === 'insufficient_credit' ? 'insufficient_credit' : 'provider_error';
+    if (e.code === 'insufficient_credit') {
+      // Remember the exhausted state so the avatar UI can show it honestly.
+      require('./provider').markCreditsExhausted();
+    }
     const message = e.code === 'insufficient_credit'
       ? 'Your HeyGen account has no credits, so talking-video generation is paused. Voice still works fine.'
       : e.message;

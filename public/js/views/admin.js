@@ -167,9 +167,11 @@ function renderCalls(body, calls) {
   body.querySelectorAll('.skeleton').forEach((x) => x.remove());
   if (!calls.length) { body.appendChild(UI.empty('📞', 'No calls.')); return; }
   calls.slice(0, 25).forEach((c) => {
+    const sim = c.simulated || c.channel === 'mock-voice';
     body.appendChild(h('div', { class: 'list-item' }, [
       h('span', { style: { fontSize: '1.3rem' } }, '📞'),
       h('div', { style: { flex: 1 } }, [h('div', { style: { fontWeight: 600 } }, (c.contact || '—') + ' · ' + (c.user || '')), h('div', { class: 'small muted' }, (c.kind || '') + ' · ' + (c.channel || ''))]),
+      sim ? h('span', { class: 'tag warn' }, 'Simulated') : null,
       UI.statusTag(c.status)
     ]));
   });

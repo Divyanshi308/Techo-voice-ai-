@@ -63,12 +63,14 @@ function renderCalls(body, calls) {
   body.querySelectorAll('.skeleton').forEach((x) => x.remove());
   if (!calls.length) { body.appendChild(UI.empty('📞', 'No calls yet — schedule from a survey.')); return; }
   calls.slice(0, 20).forEach((c) => {
+    const sim = c.simulated || c.channel === 'mock-voice';
     body.appendChild(h('div', { class: 'list-item' }, [
       h('span', { style: { fontSize: '1.4rem' } }, '📞'),
       h('div', { style: { flex: 1 } }, [
         h('div', { style: { fontWeight: 700 } }, c.contact || 'Owner/myself'),
         h('div', { class: 'small muted' }, (c.kind || 'survey') + ' · ' + new Date(c.scheduled).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + (c.durationSec ? ` · ${c.durationSec}s` : ''))
       ]),
+      sim ? h('span', { class: 'tag warn' }, 'Simulated') : null,
       UI.statusTag(c.status)
     ]));
   });

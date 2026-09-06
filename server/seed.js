@@ -336,4 +336,49 @@ const seed = () => {
   console.log('[seed] sample data seeded.');
 };
 
-module.exports = { seed, LANGUAGES, AVATARS, VOICES, EXPERTS, THEMES };
+/**
+ * refreshDemoData() — runs on every boot (idempotent).
+ *
+ * Keeps the demo owner's dashboard alive for the live demo: when the last 7
+ * days hold no transactions, it seeds a handful of clearly-labelled sample
+ * records (source:'sample', "(demo)") so the Payments / Sales pages never show
+ * empty zeros. Also re-arms one pending voice reminder so the "Simulated call"
+ * flow has something to demo. Only touches usr_demo — never real users.
+ */
+function refreshDemoData() {
+  const user = store.get('users', 'usr_demo');
+  if (!user) return;
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+  const iso = (ms) => new Date(ms).toISOString();
+  const recent = store.find('transactions', (t) => t.userId === 'usr_demo' && new Date(t.at || 0).getTime() >= now - 7 * DAY);
+  if (recent.length === 0) {
+    const samples = [
+      { type: 'sale', amount: 2150, note: 'Daily store billing (demo)', at: now - 1 * DAY },
+      { type: 'sale', amount: 990, note: 'Snacks order — tea stall (demo)', at: now - 2 * DAY },
+      { type: 'expense', amount: 6400, note: 'Metro restock — dal & atta (demo)', at: now - 3 * DAY },
+      { type: 'sale', amount: 3120, note: 'Festive hamper pre-order (demo)', at: now - 4 * DAY },
+      { type: 'expense', amount: 1700, note: 'Udaan.com re-stock (demo)', at: now - 5 * DAY }
+    ];
+    samples.forEach((s, i) => {
+      store.insert('transactions', {
+        id: seedId('tx', 'recent-' + i + '-' + user.id), userId: 'usr_demo',
+        type: s.type, amount: s.amount, note: s.note, topic: s.type === 'sale' ? 'retail' : 'inventory',
+        at: iso(s.at), via: 'voice', source: 'sample'
+      });
+    });
+    console.log('[seed] demo ledger refreshed with recent sample records.');
+  }
+  const dueSoon = store.find('reminders', (r) => r.userId === 'usr_demo' && r.status === 'pending').length;
+  if (dueSoon < 2) {
+    store.insert('reminders', {
+      id: seedId('rm', 'demo-reminder'), userId: 'usr_demo',
+      title: 'Metro restock call (demo)', notes: 'Re-order dal & atta before weekend rush.',
+      due: iso(now + 1 * DAY), humanDue: 'tomorrow 10:00', priority: 'medium', kind: 'todo',
+      method: 'voice-call', consent: true, status: 'pending', createdAt: iso(now)
+    });
+    console.log('[seed] demo reminder re-armed.');
+  }
+}
+
+module.exports = { seed, refreshDemoData, LANGUAGES, AVATARS, VOICES, EXPERTS, THEMES };

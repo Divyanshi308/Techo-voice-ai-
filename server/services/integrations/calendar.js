@@ -12,6 +12,7 @@
  */
 
 const store = require('../../db');
+const { publicBaseUrl } = require('../../baseUrl');
 
 const CLIENT_ID = () => process.env.GOOGLE_CLIENT_ID || '';
 const CLIENT_SECRET = () => process.env.GOOGLE_CLIENT_SECRET || '';
@@ -22,7 +23,7 @@ function configured() {
 }
 
 function baseUrl() {
-  return process.env.PUBLIC_BASE_URL || 'http://localhost:4321';
+  return publicBaseUrl();
 }
 
 function setupSteps() {
@@ -35,7 +36,12 @@ function setupSteps() {
 }
 
 function status() {
-  return { provider: 'google-calendar', configured: configured(), setup: configured() ? [] : setupSteps() };
+  return {
+    provider: 'google-calendar',
+    configured: configured(),
+    setup: configured() ? [] : setupSteps(),
+    redirectUri: baseUrl() + REDIRECT_PATH
+  };
 }
 
 /** OAuth consent URL the user visits to connect their calendar. */

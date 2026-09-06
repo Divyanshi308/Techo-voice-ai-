@@ -19,6 +19,7 @@ const rte = require('../services/agora/rte');
 const agentConfig = require('../services/agora/agentConfig');
 const analytics = require('../services/agora/analytics');
 const sessions = require('../services/agora/sessions');
+const { publicBaseUrl } = require('../baseUrl');
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ router.get('/api/agora/status', auth.requireUser, (req, res) => {
       agentConfigured: st.agentConfigured,
       pipelineId: process.env.AGORA_PIPELINE_ID || '',
       region: rte.REGION(),
-      baseUrl: process.env.PUBLIC_BASE_URL || process.env.VY_BASE_URL || 'http://localhost:4321',
+      baseUrl: publicBaseUrl(),
       webhooksConfigured: !!process.env.WEBHOOK_SECRET,
       secretsExposed: st.secretsExposed,
       rtcConfigured: st.rtcConfigured,
@@ -211,18 +212,18 @@ router.post('/api/agora/session/stop', auth.requireUser, async (req, res) => {
   res.json({ ok: true, session: s ? safeSession(s) : null });
 });
 
-// Get status of the caller's current session.
-router.get('/api/agora/session/:id', auth.requireUser, (req, res) => {
-  const s = sessions.current(req.session.uid);
-  if (!s || s.id !== req.params.id) return res.status(404).json({ error: 'session_not_found' });
-  res.json({ ok: true, session: safeSession(s) });
-});
-
 // Live transcript sync — merges the agent's short-term history (when live)
 // into the session transcript so the UI can poll one endpoint.
 router.get('/api/agora/session/sync', auth.requireUser, async (req, res) => {
   const r = await sessions.syncTranscript(req.session.uid);
   res.json({ ok: r.ok !== false, ...r });
+});
+
+// Get status of the caller's current session.
+router.get('/api/agora/session/:id', auth.requireUser, (req, res) => {
+  const s = sessions.current(req.session.uid);
+  if (!s || s.id !== req.params.id) return res.status(404).json({ error: 'session_not_found' });
+  res.json({ ok: true, session: safeSession(s) });
 });
 
 // Live transcript for a session (from the in-memory session record).
@@ -246,7 +247,8 @@ router.post('/api/agora/transfer', auth.requireUser, (req, res) => {
 // Call history (GET, authenticated).
 router.get('/api/agora/calls', auth.requireUser, (req, res) => {
   const calls = store.find('calls', (c) => c.userId === req.session.uid)
-    .slice().sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+    .slice().sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
+    .map((c) => ({ ...c, simulated: !!(c.simulated || c.channel === 'mock-voice') }));
   res.json({ ok: true, calls });
 });
 
@@ -284,7 +286,7 @@ router.get('/api/agora/configuration', auth.requireUser, (req, res) => {
       agentId: st.agentId || '',
       pipelineId: process.env.AGORA_PIPELINE_ID || '',
       mode: h ? 'production' : 'mock',
-      baseUrl: process.env.PUBLIC_BASE_URL || (process.env.VY_BASE_URL || 'http://localhost:4321'),
+      baseUrl: publicBaseUrl(),
       webhooksConfigured: !!process.env.WEBHOOK_SECRET,
       backendHealthy: true,
       lastSession: analysis_lastSession(req.session.uid)

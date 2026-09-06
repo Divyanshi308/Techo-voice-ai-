@@ -47,10 +47,18 @@ router.post('/api/chat', auth.requireUser, async (req, res) => {
   const userMsg = { role: 'user', text: String(text).trim(), lang: req.body.lang || null, at: new Date().toISOString() };
   conv.messages.push(userMsg);
 
-  const result = await aiProvider.generate({
-    user, text: userMsg.text, mode,
-    detectedLang: userMsg.lang
-  });
+  let result;
+  try {
+    result = await aiProvider.generate({
+      user, text: userMsg.text, mode,
+      detectedLang: userMsg.lang
+    });
+  } catch (e) {
+    conv.messages.pop();
+    store.update('conversations', conv.id, { messages: conv.messages });
+    console.error('[chat] AI engine error:', e);
+    return res.status(502).json({ error: 'ai_error', message: e.message || 'AI engine error' });
+  }
 
   const asstMsg = {
     role: 'assistant',
