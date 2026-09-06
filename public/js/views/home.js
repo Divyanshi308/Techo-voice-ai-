@@ -153,6 +153,7 @@ views.home = {
   async _stopVoice() {
     const self = views.home;
     if (self._poll) { clearInterval(self._poll); self._poll = null; }
+    if (typeof Voice !== 'undefined') { Voice.onSpeakEnd = null; Voice.stopSpeaking(); }
     await AgoraClient.leaveRTC();
     try { await AgoraClient.endAgent({ consent: true, persist: true }); } catch {}
     self._session = null;
@@ -182,9 +183,30 @@ views.home = {
           self._updateUI();
         }
       });
-      if (transcript.length > 0 && self._state === 'listening') {
+      // Voice certainty: the AI's answer is spoken by the Agora agent over RTC
+      // (real voice). When remote audio isn't flowing, fall back to browser
+      // TTS so the reply is always audible.
+      const hadAudio = AgoraClient.remoteTracks.length > 0;
+      if (transcript.length > 0) {
         const last = transcript[transcript.length - 1];
-        if (last.role !== 'user') self._setState('processing');
+        const freshAssistant = fresh.some((m) => m.role !== 'user');
+        if (last.role === 'user') {
+          if (self._state !== 'listening') self._setState('listening');
+        } else if (freshAssistant) {
+          if (hadAudio) {
+            self._setState('speaking');
+          } else {
+            const txt = (last.text || '').trim();
+            if (txt && typeof Voice !== 'undefined') {
+              Voice.onSpeakEnd = () => { if (views.home._session && views.home._state !== 'idle' && views.home._state !== 'error') views.home._setState('listening'); };
+              Voice.stopSpeaking();
+              const doSpeak = () => { try { Voice.speak(txt, { lang: 'hing' }); } catch (e) {} };
+              doSpeak();
+              setTimeout(doSpeak, 350); // Chrome may drop the first utterance while TTS voices load
+            }
+            self._setState('speaking');
+          }
+        }
       }
     } catch (e) { /* transient */ }
   },
@@ -197,6 +219,7 @@ views.home = {
   _cleanup() {
     const self = views.home;
     if (self._poll) { clearInterval(self._poll); self._poll = null; }
+    if (typeof Voice !== 'undefined') { Voice.onSpeakEnd = null; Voice.stopSpeaking(); }
     if (self._session) { AgoraClient.leaveRTC().catch(() => {}); AgoraClient.endAgent({ consent: false, persist: false }).catch(() => {}); self._session = null; }
     self._messages = [];
     self._seen = 0;

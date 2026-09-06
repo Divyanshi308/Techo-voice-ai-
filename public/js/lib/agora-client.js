@@ -22,6 +22,7 @@ const AgoraClient = {
   localAudio: null,
   remoteTracks: [],
   listeners: new Set(),
+  aiSpeaking: false,     // last known agent audio state
   _sdkPromise: null,
 
   /* Lazy-load the AgoraRTC Web SDK on demand (~1MB). Loading only happens when
@@ -136,6 +137,10 @@ const AgoraClient = {
       if (!tok.available) throw new Error(tok.note || 'Token unavailable');
       if (onEvent) onEvent({ type: 'connecting', message: 'Connecting to Agora voice channel…' });
 
+      // Unlock audio output inside the user-gesture context so the AI's voice
+      // is never blocked by autoplay policies (best-effort, no-op if not needed).
+      AgoraClient.unlockAudio();
+
       const client = RTC.createClient({ mode: 'rtc', codec: 'vp8' });
       await client.join(tok.appId, tok.channel, tok.token, Number(tok.uid) || undefined);
       if (onEvent) onEvent({ type: 'connected', message: 'Connected to Agora channel.' });
@@ -143,11 +148,24 @@ const AgoraClient = {
       const local = await RTC.createMicrophoneAudioTrack();
       await client.publish([local]);
 
+      const playRemote = (track) => {
+        // play() may need a retry while the browser finishes wiring the device.
+        return new Promise((resolve) => {
+          const attempt = (n) => {
+            if (!track) return resolve();
+            try { track.setVolume(1); track.play(); resolve(); }
+            catch (e) { if (n < 3) setTimeout(() => attempt(n + 1), 400); else resolve(); }
+          };
+          attempt(0);
+        });
+      };
       const handleTrack = async (user, mediaType) => {
         try { await client.subscribe(user, mediaType); } catch {}
         if (mediaType === 'audio' && user.audioTrack) {
-          user.audioTrack.play();
+          user.audioTrack.on('track-ended', () => AgoraClient.aiSpeaking = false);
+          await playRemote(user.audioTrack);
           AgoraClient.remoteTracks.push(user.audioTrack);
+          AgoraClient.aiSpeaking = true;
           if (onEvent) onEvent({ type: 'ai_speaking', message: '🔊 AI agent voice connected (Agora).' });
         }
       };
@@ -175,12 +193,26 @@ const AgoraClient = {
   },
 
   async leaveRTC() {
+    AgoraClient.aiSpeaking = false;
     if (AgoraClient.localAudio) { try { AgoraClient.localAudio.close(); } catch {} }
     AgoraClient.remoteTracks.forEach((t) => { try { t.stop(); } catch {} });
     AgoraClient.remoteTracks = [];
     if (AgoraClient.rtc) { try { await AgoraClient.rtc.leave(); } catch {} }
     AgoraClient.rtc = null;
     AgoraClient.localAudio = null;
+  },
+
+  /* Best-effort audio unlock so the AI's spoken reply is never autoplay-blocked. */
+  unlockAudio() {
+    try {
+      if (!window.__vvAudioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) window.__vvAudioCtx = new AC();
+      }
+      const ctx = window.__vvAudioCtx;
+      if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+      if (ctx && ctx.state === 'running') ctx.resume().catch(() => {});
+    } catch (e) { /* non-fatal */ }
   }
 };
 
