@@ -255,6 +255,63 @@ a { color: var(--vp-primary) !important; }
 .mic-btn { color: var(--vp-blue); font-size: 18px; }
 .mic-btn:hover { background: rgba(61,157,196,.18); }
 
+/* ---------- home voice button + conversation panel ---------- */
+.home-voice-btn { font-size: 18px; transition: background .2s, box-shadow .2s; }
+.home-voice-btn.hs-listening {
+  color: #F0564A; background: rgba(240,86,74,.18);
+  box-shadow: 0 0 0 3px rgba(240,86,74,.3);
+  animation: hv-pulse 1.2s ease-in-out infinite;
+}
+.home-voice-btn.hs-speaking {
+  color: var(--vp-green); background: rgba(52,211,153,.18);
+  box-shadow: 0 0 0 3px rgba(52,211,153,.3);
+  animation: hv-pulse 1.4s ease-in-out infinite;
+}
+.home-voice-btn.hs-processing {
+  color: var(--vp-amber); background: rgba(245,165,36,.18);
+  animation: hv-spin .8s linear infinite;
+}
+.home-voice-btn.hs-error { color: var(--vp-red); background: rgba(240,86,74,.12); }
+
+@keyframes hv-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(240,86,74,.3); }
+  50% { box-shadow: 0 0 0 7px rgba(240,86,74,.08); }
+}
+@keyframes hv-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* conversation panel — compact, semi-transparent on dark home */
+.home-voice-panel {
+  width: 100%; max-width: 520px;
+  background: rgba(15,23,42,.78);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
+  padding: 12px 14px;
+  backdrop-filter: blur(12px);
+  max-height: 240px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.hv-status {
+  font-size: 12px; color: var(--vp-text2);
+  text-align: center; padding: 2px 0;
+}
+.hv-listening { color: var(--vp-blue); }
+.hv-processing { color: var(--vp-amber); }
+.hv-speaking { color: var(--vp-green); }
+.hv-error { color: var(--vp-red); }
+
+.hv-row {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 12px; border-radius: 10px;
+}
+.hv-user { background: rgba(124,92,246,.15); align-self: flex-end; max-width: 88%; }
+.hv-ai { background: rgba(52,211,153,.08); align-self: flex-start; max-width: 88%; }
+.hv-label { font-size: 10px; font-weight: 600; color: var(--vp-text2); text-transform: uppercase; letter-spacing: .4px; }
+.hv-text { font-size: 13px; color: var(--vp-text); line-height: 1.45; }
+.hv-ai .hv-text { color: var(--vp-green); }
+
 /* connection status */
 .home-status {
   display: flex; align-items: center; gap: 6px;
