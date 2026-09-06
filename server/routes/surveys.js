@@ -57,7 +57,7 @@ router.post('/api/surveys', auth.requireUser, (req, res) => {
     userId: user.id,
     title: b.title,
     description: b.description || '',
-    language: b.language || user.preferredLang || 'hing',
+    language: b.language || user.preferredLang || 'en',
     status: b.status || 'active',
     consent: b.consent === true,
     questions: b.questions.map((q, i) => ({ id: `q${i + 1}`, ...q })),

@@ -101,9 +101,12 @@ views.language = {
         UI.toast('Playing ' + l.name + ' voice…', 'info');
       } }, '🔊 ' + TR.t('voice_preview')));
 
-      // Set as UI language
+      // Set as UI language (UI stays English; voice + text replies stay multilingual)
+      const uiLocked = l.code !== 'en';
       btns.appendChild(h('button', {
-        class: 'chip sm' + (isUI ? ' selected' : ''),
+        class: 'chip sm' + (isUI ? ' selected' : '') + (uiLocked ? ' disabled' : ''),
+        title: uiLocked ? 'The app interface stays in English; you can still speak and get replies in ' + l.name + '.' : 'English interface',
+        disabled: uiLocked,
         onclick: async () => {
           await API.put('/api/me/preferences', { uiLang: l.code });
           App.session.user.uiLang = l.code;

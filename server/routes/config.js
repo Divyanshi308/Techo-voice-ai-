@@ -51,7 +51,7 @@ router.get('/api/health', (req, res) => {
     demo: true,
     provider: aiProvider.PROVIDER.kind,
     labels: {
-      ai: 'mock (local rule-based engine — no external LLM key)',
+      ai: agoraConfig.status().credentialsPresent && agoraConfig.status().agentId ? 'agora agent (Agora-cloud LLM answers voice)' : 'mock (local rule-based engine — no external LLM key)',
       telephony: process.env.TELNYX_API_KEY ? 'telnyx (real)' : 'simulated (mock telephony)',
       asr: process.env.DEEPGRAM_API_KEY ? 'deepgram' : 'browser Web Speech',
       tts: process.env.ELEVENLABS_API_KEY ? 'elevenlabs' : 'device/browser synthesis'

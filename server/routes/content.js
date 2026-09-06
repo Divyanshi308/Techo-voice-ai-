@@ -11,7 +11,7 @@ const router = express.Router();
 router.post('/api/content/generate', auth.requireUser, (req, res) => {
   const user = store.get('users', req.session.uid);
   const { kind, lang, customerId } = req.body || {};
-  const useLang = lang || user.preferredLang || 'hing';
+  const useLang = lang || user.preferredLang || 'en';
   let customerName;
   if (customerId) {
     const c = store.get('contacts', customerId);

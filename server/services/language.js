@@ -208,7 +208,7 @@ const detectLang = (text, previousLang) => {
  * @returns {{replyLang, mode}}
  */
 function resolveReplyLang({ preferred, detected, detectedConfident, lock, allowSwitch }) {
-  const pref = preferred && ALLOWED.has(preferred) ? preferred : 'hing';
+  const pref = preferred && ALLOWED.has(preferred) ? preferred : 'en';
   if (lock && ALLOWED.has(preferred)) return { replyLang: pref, mode: 'locked' };
   if (allowSwitch !== false && detected && ALLOWED.has(detected) && detected !== 'auto') {
     if (detectedConfident) return { replyLang: detected, mode: 'follow' };

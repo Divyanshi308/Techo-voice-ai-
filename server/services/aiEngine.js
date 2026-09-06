@@ -16,6 +16,7 @@ const telephony = require('./telephony');
 const calendarSvc = require('./integrations/calendar');
 const emailSvc = require('./integrations/email');
 const stripeSvc = require('./integrations/stripe');
+const callsSvc = require('./calls');
 
 /* ------------------------------------------------------------------ *
  * Per-language copy for engine phrasing
@@ -503,7 +504,7 @@ const extractProfileFields = (text, business = {}) => {
 const ctxByUser = new Map(); // userId -> { lang, pending, lastAction }
 
 const getCtx = (userId) => {
-  if (!ctxByUser.has(userId)) ctxByUser.set(userId, { lang: 'hing', pending: null, lastAction: null });
+  if (!ctxByUser.has(userId)) ctxByUser.set(userId, { lang: 'en', pending: null, lastAction: null });
   return ctxByUser.get(userId);
 };
 
@@ -513,7 +514,7 @@ const getCtx = (userId) => {
 
 const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
   const ctx = getCtx(user.id);
-  const userLang = user.preferredLang || 'hing';
+  const userLang = user.preferredLang || 'en';
   const prefs = user.langPrefs || {};
   const detection = language.detectLang(text, ctx.lang);
   const resolved = language.resolveReplyLang({
@@ -546,28 +547,40 @@ const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
       store.insert('reminders', { userId: user.id, title: p.title, notes: p.notes, due: p.due, humanDue: p.humanDue, priority: p.priority || 'medium', status: 'pending', kind: p.kind || 'todo', method: p.method || (user.consents && user.consents.reminders ? 'voice-call' : 'in-app'), consent: !!(user.consents && user.consents.reminders), createdAt: new Date().toISOString() });
       actions.push({ type: 'reminder', payload: p });
       meta.kind = 'reminder-set'; meta.due = p.humanDue;
-      return { reply: `⏰ Done! Reminder "${p.title}" ${p.humanDue || ''} ke liye set (${p.method})`, replyLang: speakLang, actions, toolCalls, meta, intents: ['reminder'] };
+      return { reply: `⏰ Done! Reminder "${p.title}" ${p.humanDue || ''} is set (${p.method}).`, replyLang: speakLang, actions, toolCalls, meta, intents: ['reminder'] };
+    }
+    if (p.type === 'call') {
+      // Voice-requested outbound call. Explicit request counts as consent; the
+      // actual dial stays double-gated by the user's stored reminders consent.
+      const r = callsSvc.schedule({ userId: user.id, title: p.title, due: p.due, humanDue: p.humanDue, notes: p.notes, consent: true });
+      actions.push({ type: 'call', payload: { ...p, simulated: r.simulated, callId: r.call && r.call.id } });
+      meta.kind = 'call-scheduled'; meta.due = p.humanDue; meta.simulated = !!r.simulated;
+      const when = p.humanDue || 'the scheduled time';
+      const note = r.simulated
+        ? `📞 Call "${p.title}" is scheduled for ${when}. Outbound telephony is simulated (${r.channel}) here, so you'll get an in-app notification when it fires${r.reminder && r.reminder.notifyEmail ? ' plus an email to ' + r.reminder.notifyEmail : ''}.`
+        : `📞 Call "${p.title}" scheduled for ${when}. Real outbound telephony is active (${r.channel}).`;
+      return { reply: note, replyLang: speakLang, actions, toolCalls, meta, intents: ['call'] };
     }
     if (p.type === 'email') {
       const r = await emailSvc.send(user.id, { to: p.to, subject: p.subject, text: p.text, consent: true });
       actions.push({ type: 'email', payload: { ...p, result: r.ok ? 'sent' : r.reason } });
       meta.kind = r.ok ? 'email-sent' : 'email-failed';
-      if (r.ok) return { reply: `📧 Email bhej diya ${p.to} ko — "${p.subject}". Sent list Integrations page par dikhega.`, replyLang: speakLang, actions, toolCalls, meta, intents: ['email'] };
-      return { reply: `📧 Email nahi bheja ja saka (${r.message || r.reason}). ${r.setup ? 'Integrations page par setup steps dekhein.' : ''}`, replyLang: speakLang, actions, toolCalls, meta, intents: ['email'] };
+      if (r.ok) return { reply: `📧 Email sent to ${p.to} — "${p.subject}". It appears in the Sent list on the Integrations page.`, replyLang: speakLang, actions, toolCalls, meta, intents: ['email'] };
+      return { reply: `📧 Email could not be sent (${r.message || r.reason}).${r.setup ? ' Check the Integrations page for setup steps.' : ''}`, replyLang: speakLang, actions, toolCalls, meta, intents: ['email'] };
     }
     if (p.type === 'calendar-event') {
       const r = await calendarSvc.createEvent(user.id, { title: p.title, start: p.start, end: p.end, description: p.notes });
       actions.push({ type: 'calendar-event', payload: { ...p, result: r.ok ? 'created' : (r.reason || 'not-configured') } });
       meta.kind = r.ok ? 'calendar-created' : 'calendar-failed';
-      if (r.ok) return { reply: `📅 Meeting calendar me add ho gayi — "${p.title}".`, replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
+      if (r.ok) return { reply: `📅 Meeting added to your calendar — "${p.title}".`, replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
       // Graceful fallback: keep it as a local reminder so nothing is lost.
       store.insert('reminders', { userId: user.id, title: p.title, notes: p.notes, due: p.start, humanDue: p.human, priority: 'medium', status: 'pending', kind: 'todo', method: 'in-app', consent: true, createdAt: new Date().toISOString() });
-      return { reply: `📅 Google Calendar connected nahi hai, isliye maine ise local reminder me save kar diya ("${p.title}"). Connect karne ke liye Integrations page dekhein.`, replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar', 'reminder'] };
+      return { reply: `📅 Google Calendar isn't connected, so I saved this as a local reminder instead ("${p.title}"). Connect it on the Integrations page.`, replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar', 'reminder'] };
     }
   }
   if (ctx.pending && hasNegate(text)) {
     ctx.pending = null;
-    return { reply: 'No problem — cancel kar diya. Kuch aur?', replyLang: speakLang, actions: [], toolCalls, meta, intents: ['cancel'] };
+    return { reply: 'No problem — cancelled. Anything else?', replyLang: speakLang, actions: [], toolCalls, meta, intents: ['cancel'] };
   }
 
   // --- 2. Greeting -----------------------------------------------------
@@ -608,7 +621,7 @@ const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
     const experts = store.find('experts', (e) => e.available);
     const names = experts.slice(0, 2).map((e) => `${e.name} (${e.role})`).join(', ');
     return {
-      reply: `Main yahan verified jawab nahi de sakta is liye maine turant case bana diya (${caseRecord.id}). ${names ? `Available expert: ${names}.` : ''} "Support" tab me aap progress dekh sakte ho.`,
+      reply: `I can't give you a verified answer here, so I created a case for a human expert (${caseRecord.id}). ${names ? `Available expert: ${names}.` : ''} You can track progress in the Support tab.`,
       replyLang: speakLang, actions, toolCalls, meta, intents: ['escalate']
     };
   }
@@ -637,7 +650,7 @@ const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
     let title = text.replace(/(remind|reminder|yaad dillao|yaad|lagao|को remind)/i, '').replace(/[.,!?]/g, '').trim().slice(0, 50);
     if (!title || title.toLowerCase().startsWith('me')) title = 'Business task';
     if (!when) {
-      return { reply: 'Kis time par yaad dilana hai? Jaise "kal shaam 5 baje" batao.', replyLang: speakLang, actions: [], toolCalls, meta: { ...meta, kind: 'need-time' }, intents: ['reminder'] };
+      return { reply: '⏰ What time should I remind you? Say "tomorrow at 5 pm" or "kal shaam 5 baje".', replyLang: speakLang, actions: [], toolCalls, meta: { ...meta, kind: 'need-time' }, intents: ['reminder'] };
     }
     const withTime = parseTimeOfDay(text, when.due) || when.due;
     ctx.pending = { type: 'reminder', title, notes: text, due: withTime, humanDue: when.human, kind: guessTopic(text) || 'todo' };
@@ -645,7 +658,26 @@ const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
   }
 
   // --- 6b. Integrations: calendar / email / payments ("Give it a Voice") ---
-  const calWords = ['meeting', 'appointment', 'calendar', 'calender', 'schedule', 'reschedule', 'call karna hai', 'milna hai'];
+  const calWords = ['meeting', 'appointment', 'calendar', 'calender', 'schedule', 'reschedule', 'milna hai'];
+
+  // --- 6a. Call scheduling ("schedule a call", "kal call karna hai") ---
+  // Distinct from a calendar *meeting*: creates an outbound call record + reminder,
+  // honestly labelled real vs simulated (mock telephony) with an email-notify option.
+  const isCallSchedule =
+    hasAny(lower, ['call karna hai', 'call karwana', 'call kardo', 'call karwado', 'phone call', 'schedule a call', 'schedule call', 'call set', 'call rakh']) ||
+    /(call|phone).{0,20}(karna|karw|kardo|book|schedule|fix karein|set karein|arrange|lagao|rakh|dunga|dena|bada|kar bhejo)/i.test(lower);
+  if (isCallSchedule && !/(meeting|appointment|videoconf|google meet)/i.test(lower)) {
+    const when = parseDueDate(text);
+    const withTime = (when && (parseTimeOfDay(text, when.due) || when.due)) || null;
+    let title = text.replace(/(schedule|book|set|arrange|fix|karna|karw|karwado|kardo|karao|kal|aaj|shaam|sham|subah|saam|raat|bade|bada|call|phone|bhejo|dena|dunga|par|ko)/gi, '')
+      .replace(/[.,!?]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 50);
+    if (!title || title.length < 2) title = 'Business call';
+    if (!when) {
+      return { reply: '📞 When should the call happen? Say "tomorrow at 5 pm" or "kal shaam 5 baje".', replyLang: speakLang, actions: [], toolCalls, meta: { ...meta, kind: 'need-call-time' }, intents: ['call'] };
+    }
+    ctx.pending = { type: 'call', title, due: withTime, humanDue: when.human, notes: text };
+    return { reply: lfill(speakLang, 'yesWait', { pending: `Call "${title}" — ${when.human}` }), replyLang: speakLang, actions, toolCalls, meta: { ...meta, kind: 'confirm-call', title, due: when.human }, intents: ['call'] };
+  }
   const mailWords = ['email', 'e-mail', 'mail bhejo', 'mail karo', 'mail kar'];
   const payWords = ['sales last week', 'last week sales', 'revenue', 'top products', 'payments overview', 'kitni sale hui', 'pichhle hafte'];
   if (hasAny(lower, calWords)) {
@@ -657,11 +689,11 @@ const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
       // List upcoming events (or explain setup).
       const r = await calendarSvc.listUpcoming(user.id, 5);
       meta.kind = 'calendar-list';
-      if (!r.configured) return { reply: '📅 Google Calendar abhi connected nahi hai. Integrations page par 4 setup steps hain — connect karte hi main meetings dikha aur add kar dunga. Tab tak local reminders kaam karenge.', replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
-      if (r.reason) return { reply: '📅 Calendar connect hai par list nahi la saka. Dobara connect karke try karein (Integrations page).', replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
-      if (!r.events.length) return { reply: '📅 Aane wale koi meetings nahi mile. "Kal shaam 5 baje supplier se meeting" bolkar add kar sakte ho.', replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
+      if (!r.configured) return { reply: '📅 Google Calendar isn\'t connected yet. The Integrations page has 4 setup steps — once connected I can show and add your meetings. Until then, local reminders work.', replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
+      if (r.reason) return { reply: '📅 Your calendar is connected but I couldn\'t fetch events. Reconnect and try again (Integrations page).', replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
+      if (!r.events.length) return { reply: '📅 No upcoming meetings found. You can say "meeting with a supplier tomorrow at 5 pm" to add one.', replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
       const lines = r.events.map((e) => `• ${e.title} — ${e.start}`).join('\n');
-      return { reply: `📅 Aane wali meetings:\n${lines}`, replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
+      return { reply: `📅 Upcoming meetings:\n${lines}`, replyLang: speakLang, actions, toolCalls, meta, intents: ['calendar'] };
     }
     ctx.pending = { type: 'calendar-event', title, notes: text, start: withTime, end: withTime, human: when.human };
     return { reply: lfill(speakLang, 'yesWait', { pending: `Meeting "${title}" — ${when.human}` }), replyLang: speakLang, actions, toolCalls, meta: { ...meta, kind: 'confirm-calendar', title, due: when.human }, intents: ['calendar'] };
@@ -672,11 +704,11 @@ const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
     const subjMatch = text.match(/(?:about|regarding|subject|ke baare me|par)\s+([^.,!?]{3,80})/i);
     const subject = subjMatch ? subjMatch[1].trim() : '';
     if (!to) {
-      return { reply: '📧 Email kise bhejna hai? Jaise bolo "supplier@example.com ko stock delay ke baare me email bhejo".', replyLang: speakLang, actions: [], toolCalls, meta: { ...meta, kind: 'need-email-to' }, intents: ['email'] };
+      return { reply: '📧 Who should I email? Say "send an email to supplier@example.com about the stock delay".', replyLang: speakLang, actions: [], toolCalls, meta: { ...meta, kind: 'need-email-to' }, intents: ['email'] };
     }
     if (!subject) {
       ctx.pending = { type: 'email-await-subject', to };
-      return { reply: `📧 ${to} ko email — subject/body kya likhun? Poora text bolo.`, replyLang: speakLang, actions: [], toolCalls, meta: { ...meta, kind: 'need-email-body', to }, intents: ['email'] };
+      return { reply: `📧 Email to ${to} — what subject and body? Say the full text.`, replyLang: speakLang, actions: [], toolCalls, meta: { ...meta, kind: 'need-email-body', to }, intents: ['email'] };
     }
     ctx.pending = { type: 'email', to, subject, text: subject };
     return { reply: lfill(speakLang, 'yesWait', { pending: `Email to ${to} — "${subject}"` }), replyLang: speakLang, actions, toolCalls, meta: { ...meta, kind: 'confirm-email', to, subject }, intents: ['email'] };
@@ -689,10 +721,10 @@ const handleMessage = async ({ user, text, mode = 'chat', detectedLang }) => {
   if (hasAny(lower, payWords)) {
     const r = await stripeSvc.overview(user.id, 7);
     meta.kind = 'payments-overview';
-    if (r.reason) return { reply: '💳 Payments summary abhi nahi la saka. Thodi der me try karein.', replyLang: speakLang, actions, toolCalls, meta, intents: ['payments'] };
-    const tag = r.demo ? ' (demo — Stripe not configured, local ledger se)' : ' (Stripe test mode)';
+    if (r.reason) return { reply: '💳 I couldn\'t fetch your payments summary right now. Try again in a moment.', replyLang: speakLang, actions, toolCalls, meta, intents: ['payments'] };
+    const tag = r.demo ? ' (demo — Stripe not configured, local ledger)' : ' (Stripe test mode)';
     const top = (r.top || []).map((x) => `${x.note}: ₹${x.total}`).join(', ');
-    return { reply: `💳 Pichhle ${r.rangeDays} din${tag}: sale ₹${r.sales}, kharch ₹${r.expenses}, net ₹${r.net}.${top ? ' Top: ' + top + '.' : ''}`, replyLang: speakLang, actions, toolCalls, meta, intents: ['payments'] };
+    return { reply: `💳 Last ${r.rangeDays} days${tag}: sales ₹${r.sales}, expenses ₹${r.expenses}, net ₹${r.net}.${top ? ' Top: ' + top + '.' : ''}`, replyLang: speakLang, actions, toolCalls, meta, intents: ['payments'] };
   }
 
   // --- 7. Market info (verified/estimated/uncertain) ---------------------

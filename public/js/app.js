@@ -43,8 +43,7 @@ const App = {
     // feature (18 languages, language registry, reply-language settings)
     // is fully preserved — only the app chrome is pinned to English unless the
     // user has explicitly chosen a UI language.
-    const savedUiLang = App.session && App.session.user && App.session.user.uiLang;
-    TR.setUiLang(savedUiLang || 'en');
+TR.setUiLang('en');
 
     // Set document title
     document.title = 'Techo';

@@ -132,7 +132,7 @@ const seed = () => {
     {
       id: 'usr_demo', email: 'demo@vyaparvaani.local', name: 'Vijay Sharma', role: 'owner',
       provider: 'demo', picture: '', phone: '+91 98290 00000',
-      preferredLang: 'hing', uiLang: 'hi',
+      preferredLang: 'en', uiLang: 'en',
       avatarId: 'av_didi', voiceId: 'v_roopa',
       themeId: 'th_dukaan', themeCustom: null,
       langPrefs: { autoDetect: true, lockResponseLang: false, allowSwitch: true, showNative: true, showRoman: false },
@@ -348,6 +348,12 @@ const seed = () => {
 function refreshDemoData() {
   const user = store.get('users', 'usr_demo');
   if (!user) return;
+  // Product default: English UI + English-first replies for the demo account
+  // (multilingual voice input stays on). Existing installs seeded hing/hi.
+  if (user.preferredLang !== 'en' || user.uiLang !== 'en') {
+    store.update('users', 'usr_demo', { preferredLang: 'en', uiLang: 'en' });
+    console.log('[seed] demo owner language preferences reset to English defaults.');
+  }
   const now = Date.now();
   const DAY = 24 * 60 * 60 * 1000;
   const iso = (ms) => new Date(ms).toISOString();

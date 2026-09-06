@@ -72,4 +72,5 @@ const getCall = (id) => store.get('calls', id);
 const listCalls = (userId) => store.find('calls', (c) => c.userId === userId);
 const listAllCalls = () => store.all('calls');
 
-module.exports = { placeOutboundCall, getCall, listCalls, listAllCalls, STATES, MOCK_PROVIDER };
+// Driver also used by the reminders tick for scheduled (e.g. voice-reminder) calls.
+module.exports = { placeOutboundCall, getCall, listCalls, listAllCalls, STATES, MOCK_PROVIDER, simulate };

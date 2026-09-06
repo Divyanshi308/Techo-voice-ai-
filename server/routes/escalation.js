@@ -42,7 +42,7 @@ router.post('/api/cases', auth.requireUser, (req, res) => {
     status: 'open',
     priority: b.priority || 'medium',
     category: b.category || 'general',
-    language: b.language || user.preferredLang || 'hing',
+    language: b.language || user.preferredLang || 'en',
     consultTitle: b.consultTitle || b.message.slice(0, 60),
     transcript: b.message,
     summary: {

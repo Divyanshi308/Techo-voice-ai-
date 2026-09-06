@@ -78,7 +78,8 @@ async function start(userId, opts = {}) {
     transcript: [],
     agent_id: null,
     agent_uid: null,
-    error: null
+    error: null,
+    watchedUserIdx: -1
   };
 
   if (configured) {
@@ -126,6 +127,8 @@ function addTurn(userId, { role, text, lang, langConfidence, intent, entities, a
     audioRef: audioRef || null,
     at: new Date().toISOString()
   });
+  if (!s.watchedUserIdx || s.watchedUserIdx < 0) s.watchedUserIdx = 0;
+  s.watchedUserIdx = s.transcript.length - 1;
   return s;
 }
 
@@ -262,6 +265,8 @@ async function syncTranscript(userId) {
     added++;
   });
   s.turns = s.transcript.length;
+  const lastUser = s.transcript.map((t) => t.role).lastIndexOf('user');
+  s.watchedUserIdx = Math.max(s.watchedUserIdx || -1, lastUser);
   return { ok: true, synced: added, transcript: s.transcript };
 }
 

@@ -274,6 +274,17 @@ async function pollLiveTranscript() {
     } else if (r.transcript) {
       S.live.seen = r.transcript.length;
     }
+    const actions = (r && r.agentActions) || [];
+    (S.live.seenActions = S.live.seenActions || {});
+    actions.forEach((a) => {
+      if (S.live.seenActions[a.id]) return;
+      S.live.seenActions[a.id] = true;
+      if (UI && UI.toast) UI.toast((a.ok ? '✓ ' : '⚠ ') + a.label, a.ok ? 'good' : 'warn');
+      if (chatState && a.label) {
+        S.messages.push({ role: 'system', text: '[Action] ' + a.label, at: new Date().toISOString(), live: true, action: a });
+        renderLog();
+      }
+    });
   } catch (e) { /* transient: keep polling until mic off */ }
 }
 

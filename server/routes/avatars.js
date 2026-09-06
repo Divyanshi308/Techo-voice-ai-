@@ -39,8 +39,8 @@ router.get('/api/me/preferences', auth.requireUser, (req, res) => {
     preferences: {
       avatarId: user.avatarId,
       voiceId: user.voiceId,
-      uiLang: user.uiLang || 'hi',
-      preferredLang: user.preferredLang || 'hing',
+      uiLang: user.uiLang || 'en',
+      preferredLang: user.preferredLang || 'en',
       themeId: user.themeId,
       themeCustom: user.themeCustom || null,
       langPrefs: user.langPrefs || {
@@ -86,7 +86,7 @@ router.post('/api/avatars/custom', auth.requireUser, (req, res) => {
   const avatar = store.insert('avatars', {
     name: b.name,
     ownerId: user.id,
-    lang: b.lang || user.preferredLang || 'hing',
+    lang: b.lang || user.preferredLang || 'en',
     gender: b.gender || 'neutral',
     tone: b.tone || 'friendly',
     personality: b.personality || 'helpful voice assistant',

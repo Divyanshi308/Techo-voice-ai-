@@ -19,6 +19,7 @@ const rte = require('../services/agora/rte');
 const agentConfig = require('../services/agora/agentConfig');
 const analytics = require('../services/agora/analytics');
 const sessions = require('../services/agora/sessions');
+const agentTools = require('../services/agentTools');
 const { publicBaseUrl } = require('../baseUrl');
 
 const router = express.Router();
@@ -213,10 +214,28 @@ router.post('/api/agora/session/stop', auth.requireUser, async (req, res) => {
 });
 
 // Live transcript sync — merges the agent's short-term history (when live)
-// into the session transcript so the UI can poll one endpoint.
+// into the session transcript so the UI can poll one endpoint. Also watches
+// new USER turns for fully-specified side-effect requests (send email, record
+// a sale/expense, set a reminder, schedule a call, add a calendar event) and
+// executes them via the agent-tools layer. Results come back to the UI as
+// `agentActions` so the conversation can show what the agent's request did.
 router.get('/api/agora/session/sync', auth.requireUser, async (req, res) => {
-  const r = await sessions.syncTranscript(req.session.uid);
-  res.json({ ok: r.ok !== false, ...r });
+  const uid = req.session.uid;
+  const before = (sessions.current(uid) || {}).watchedUserIdx ?? -1;
+  const r = await sessions.syncTranscript(uid);
+  const s = sessions.current(uid);
+  const agentActions = [];
+  if (s && s.watchedUserIdx > before) {
+    const newUser = (r.transcript || []).slice(before + 1, s.watchedUserIdx + 1).filter((t) => t.role === 'user');
+    for (const turn of newUser) {
+      const matches = agentTools.maybeAutoExecute(uid, { text: turn.text, sessionId: s.id });
+      for (const m of matches) {
+        const exec = await agentTools.execute(uid, m.name, m.params);
+        if (exec && exec.label) agentActions.push({ id: exec.id || m.name, name: m.name, label: exec.label, ok: exec.ok !== false, simulated: !!exec.simulated });
+      }
+    }
+  }
+  res.json({ ok: r.ok !== false, ...r, agentActions });
 });
 
 // Get status of the caller's current session.

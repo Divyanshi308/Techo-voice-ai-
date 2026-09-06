@@ -92,6 +92,9 @@ app.use(require('./routes/admin'));
 app.use(require('./routes/storage'));
 app.use(require('./routes/agora'));
 app.use(require('./routes/integrations'));
+app.use(require('./routes/calls'));
+app.use(require('./routes/asr'));
+app.use(require('./routes/agentTools'));
 app.use(require('./routes/avatar'));
 
 // JSON 404 for unknown API routes
